@@ -1,0 +1,12 @@
+{
+     "id": "{A0F16614-3EB1-904D-7FDB-19216E9858DB}",
+     "author": "Adrian Staeves",
+     "name": "Virtual Devices",
+     "url": "https://github.com/Staeves/symcon-virtual-device",
+     "compatibility": {
+         "version": "7.2"
+     },
+     "version": "0.1",
+     "build": 0,
+     "date": 0
+ }
