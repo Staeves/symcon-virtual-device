@@ -1,0 +1,11 @@
+{
+    "id": "{939F2DCD-B4ED-0C05-7660-B9E71779F254}",
+    "name": "Termite Master",
+    "type": 3,
+    "vendor": "VirtDevice",
+    "url": "https://github.com/Staeves/symcon-virtual-device",
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "VirtDevTermite"
+}

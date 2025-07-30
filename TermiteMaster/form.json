@@ -1,0 +1,17 @@
+{
+	"elements": [
+		{
+			"type": "SelectVariable",
+			"name": "OutsideTempVar",
+			"caption": "Außentemperatur",
+			"validVariableTypes": [1, 2]
+		},
+		{
+			"type": "SelectVariable",
+			"name": "InsideTempVar",
+			"caption": "Innentemperatur",
+			"validVariableTypes": [1, 2]
+		}
+
+	]
+}
