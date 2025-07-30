@@ -46,6 +46,7 @@ class TermiteMaster extends IPSModule {
 	}
 
 	public function RequestAction ($Ident, $Value) : void {
+		$this->SetValue($Ident, $Value);
 		$this->Update();
 	}
 
