@@ -4,6 +4,9 @@
     "type": 3,
     "vendor": "VirtDevice",
     "url": "https://github.com/Staeves/symcon-virtual-device",
+    "aliases": [
+        "Termite Master"
+    ],
     "parentRequirements": [],
     "childRequirements": [],
     "implemented": [],
