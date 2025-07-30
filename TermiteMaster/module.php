@@ -66,9 +66,10 @@ class TermiteMaster extends IPSModule {
 		$max = $this->GetValue("MaxInsideTemp");
 		if ($in_tmp < $min) {
 			$this->SetV($in_tmp < GetValue($out_var));
-		} 
-		if ($max < $in_tmp) {
+		} elseif ($max < $in_tmp) {
 			$this->SetV($in_tmp > GetValue($out_var));
+		} else {
+			$this->SetV(false);
 		}
 
 	}
