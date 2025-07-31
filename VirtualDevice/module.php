@@ -8,6 +8,8 @@ class VirtualDevice extends IPSModule {
 	// Don't delete this line
 		parent::Create();
 
+		$this->RegisterTimer("TurnOffTimer", 0, "VirtDev_TimerIsOver($this->InstanceID);");
+
 		$this->RegisterPropertyString("Frontend", "Dummy");
 		$this->RegisterPropertyString("Backend", "Dummy");
 		$this->RegisterPropertyInteger("HW_Variable", 0);
@@ -108,5 +110,13 @@ class VirtualDevice extends IPSModule {
 			return new Backend();
 		}
 	}
+
+	public function TimerIsOver() : void {
+		if (strtolower(explode(":", $this->GetValue("Value"))[0]) == "ausschaltverzoegerung") {
+			$this->SetTimerInterval("TurnOffTimer", 0);	// turn off timer
+			$this->GetFrontend()->set("AUS");
+		} else {
+			throw new Exception("Turn off timer triggert, but state is different");
+		}
 }
 

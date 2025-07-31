@@ -34,6 +34,9 @@ class Frontend extends IPSModule {
 		case "wochenplan":
 			$this->device->UnregisterMessage(intval($val_parts[1]), VM_UPDATE);
 			break;
+		case "ausschaltverzoegerung":
+			$this->device->SetTimerInterval("TurnOffTimer", 0);
+			break;
 		}
 	}
 	public function set(string $val) : void {
@@ -83,6 +86,11 @@ class Frontend extends IPSModule {
 			$this->device->SetValue("Value", "WOCHENPLAN:$id");
 		}
 	}
+	protected function set_ausschaltverzoegerung($time, bool $doValueSet = true) : void {
+		$seconds = $time[0]*60*60 + $time[1]*60 + $time[2];
+		$this->set_AN(false);
+		$this->device->SetTimerInterval("TurnOffTimer", 1000*$seconds);
+	}
 }
 
 class Frontend_SL extends Frontend {
@@ -90,14 +98,17 @@ class Frontend_SL extends Frontend {
 	public function set(string $val, bool $doValueSet = true) : void {
 		$val_parts = explode(":", $val);
 		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
 		switch ($vall) {
 		case "an":
 		case "aus":
-			$fun = "set_$vall";
 			$this->$fun($doValueSet);
 			break;
 		case "wochenplan":
-			$this->set_wochenplan($val_parts[1], $doValueSet);
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		case "ausschaltverzoegerung":
+			$this->$fun(array_slice($val_parts, 1), $doValueSet);
 			break;
 		default:
 			throw new Exception("Unknown value $val");
