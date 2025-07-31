@@ -64,7 +64,22 @@ class VirtualDevice extends IPSModule {
 	}
 
 	public function RequestAction ($Ident, $Value) : void {
-		$this->SetValue($Ident, $Value);
+		switch ($Ident) {
+		case "Value":
+			$this->GetFrontend()->set($Value);
+			break;
+		case"BooleanRepr":
+			$this->GetFrontend()->setBoolean($Value);
+			break;
+		case "IntegerRepr":
+			$this->GetFrontend()->setInteger($Value);
+			break;
+		case "loatRepr":
+			$this->GetFrontend()->setFloat($Value);
+			break;
+		default:
+			throw new Exception("Requested action for unknown ident ". $Ident);
+		}
 	}
 
 	public function MessageSink($TimeStamp, $SenderID, $Message, $Data) : void {
