@@ -86,7 +86,7 @@ class VirtualDevice extends IPSModule {
 
 	public function MessageSink($TimeStamp, $SenderID, $Message, $Data) : void {
 		// only the frontend expects messages, so pass them on
-		$this->GetFrontend->MessageSink($TimeStamp, $SenderID, $Message, $Data);
+		$this->GetFrontend()->MessageSink($TimeStamp, $SenderID, $Message, $Data);
 	}
 
 	public function GetFrontend() : Frontend {
