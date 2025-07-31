@@ -1,4 +1,6 @@
 <?
+include __DIR__ . "/../libs/frontend.php";
+include __DIR__ . "/../libs/backend.php";
 
 class VirtualDevice extends IPSModule {
 	// Overrides the internal IPS_Create($id) function
@@ -6,7 +8,7 @@ class VirtualDevice extends IPSModule {
 	// Don't delete this line
 		parent::Create();
 
-		$this->RegisterPropertyString("Frontend", "sl");
+		$this->RegisterPropertyString("Frontend", "Dummy");
 		$this->RegisterPropertyString("Backend", "Dummy");
 		$this->RegisterPropertyInteger("HW_Variable", 0);
 
@@ -20,12 +22,13 @@ class VirtualDevice extends IPSModule {
 		$res = '{ "elements": [
 			{"type": "Select", "name": "Frontend", "caption": "Geräte Typ",
 				"options": [
+					{ "caption": "Dummy", "value": "Dummy" },
 					{ "caption": "Schaltbares Licht", "value": "sl" }
 				]
 			},
 			{"type": "Label", 
 				"caption": "Beim Ändern des Geräte Typ bitte die Einstellung direkt übernehmen, da sich andere Einstellungen dadurch womöglich ändern können"
-			},
+			} ' . $this->GetFrontend()->GetFormPart() .' ,
 			{"type": "Select", "name": "Backend", "caption": "Backend Typ",
 				"options": [
 					{ "caption": "Dummy", "value": "Dummy"},
@@ -43,7 +46,20 @@ class VirtualDevice extends IPSModule {
 	public function ApplyChanges(): void {
 		// Don't delete this line
 		parent::ApplyChanges();
-
+		// add or remove variables according to frontend
+		$fe = $this->GetFrontend();
+		$this->MaintainVariable("BooleanRepr", "Booean Wert", 0, "", 0, $fe::BooleanRepr);
+		if ($fe::BooleanRepr) {
+			$this->EnableAction("BooleanRepr");
+		}
+		$this->MaintainVariable("IntegerRepr", "Integer Wert", 1, "", 0, $fe::IntegerRepr);
+		if ($fe::IntegerRepr) {
+			$this->EnableAction("IntegerRepr");
+		}
+		$this->MaintainVariable("FloatRepr", "Float Wert", 2, "", 0, $fe::FloatRepr);
+		if ($fe::FloatRepr) {
+			$this->EnableAction("FloatRepr");
+		}
 
 	}
 
@@ -52,6 +68,15 @@ class VirtualDevice extends IPSModule {
 	}
 
 	public function MessageSink($TimeStamp, $SenderID, $Message, $Data) : void {
+	}
+
+	public function GetFrontend() : Frontend {
+		switch ($this->ReadPropertyString("Frontend")) {
+		case "sl":
+			return new Frontend_SL($this);
+		default:
+			return new Frontend($this);
+		}
 	}
 
 	public function GetBackend() : Backend {
@@ -66,49 +91,3 @@ class VirtualDevice extends IPSModule {
 	}
 }
 
-class Backend extends IPSModule {
-	public function __construct() {
-	}
-	public function getFormPart() {
-		return "";
-	}
-	public function set(float $val) {
-	}
-
-	public function get() : float {
-		return 0.0;
-	}
-}
-
-class Backend_IPS extends Backend {
-	public function __construct($dev) {
-		$this->id = $dev->ReadPropertyInteger("HW_Variable");
-	}
-	public function getFormPart() {
-		return ', {"type": "SelectVariable", "name": "HW_Variable", "caption": "Variable", "validVariableTypes": [' . $this->var_type_id . ']}';
-	}
-}
-class Backend_IPS_Boolean extends Backend_IPS {
-	public function __construct($dev) {
-		parent::__construct($dev);
-		$this->var_type_id = 0;
-	}
-	public function set(float $val) {
-		SetValueBoolean($this->id, $val > 0.5);
-	}
-	public function get() : float {
-		return GetValueBoolean($this->id) ? 1.0 : 0.0;
-	}
-}
-class Backend_IPS_Float extends Backend_IPS {
-	public function __construct($dev) {
-		parent::__construct($dev);
-		$this->var_type_id = 2;
-	}
-	public function set(float $val) {
-		SetValueFloat($this->id, $val);
-	}
-	public function get() : float {
-		return getValueFloat($this->id);
-	}
-}
