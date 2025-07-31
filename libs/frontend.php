@@ -82,6 +82,7 @@ class Frontend extends IPSModule {
 		if ($doValueSet) {
 			$this->device->SetValue("Value", "WOCHENPLAN:$id");
 		}
+	}
 }
 
 class Frontend_SL extends Frontend {
