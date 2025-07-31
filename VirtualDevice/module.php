@@ -118,5 +118,6 @@ class VirtualDevice extends IPSModule {
 		} else {
 			throw new Exception("Turn off timer triggert, but state is different");
 		}
+	}
 }
 
