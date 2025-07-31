@@ -64,18 +64,20 @@ class VirtualDevice extends IPSModule {
 	}
 
 	public function RequestAction ($Ident, $Value) : void {
+		$fe = $this->GetFrontend();
+		$fe->prepareValueChange();
 		switch ($Ident) {
 		case "Value":
-			$this->GetFrontend()->set($Value);
+			$fe->set($Value);
 			break;
 		case"BooleanRepr":
-			$this->GetFrontend()->setBoolean($Value);
+			$fe->setBoolean($Value);
 			break;
 		case "IntegerRepr":
-			$this->GetFrontend()->setInteger($Value);
+			$fe->setInteger($Value);
 			break;
 		case "loatRepr":
-			$this->GetFrontend()->setFloat($Value);
+			$fe->setFloat($Value);
 			break;
 		default:
 			throw new Exception("Requested action for unknown ident ". $Ident);
@@ -83,6 +85,8 @@ class VirtualDevice extends IPSModule {
 	}
 
 	public function MessageSink($TimeStamp, $SenderID, $Message, $Data) : void {
+		// only the frontend expects messages, so pass them on
+		$this->GetFrontend->MessageSink($TimeStamp, $SenderID, $Message, $Data);
 	}
 
 	public function GetFrontend() : Frontend {

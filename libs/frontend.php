@@ -11,6 +11,30 @@ class Frontend extends IPSModule {
 	public function getFormPart() {
 		return "";
 	}
+
+	public function MessageSink($TimeStamp, $SenderID, $Message, $Data) : void {
+		$val_parts = explode(":", $this->device->GetValue("Value"));
+		$vall = strtolower($val_parts[0]);
+		switch ($vall) {
+		case "wochenplan":
+			if ($SenderID != intval($val_parts[1])) {
+				throw Exception("sender ($SenderID) is not the current wochenplan ($val_parts[1])");
+			}
+			// $Data is not documented so just read it from the variable
+			$this->set(GetValueString($SenderID), false);
+			break;
+	}
+
+	public function prepareValueChange() : void {
+		// clean up all mesages and simillar, that the current value needed, so we can set a new value
+		$val_parts = explode(":", $this->device->GetValue("Value"));
+		$vall = strtolower($val_parts[0]);
+		switch ($vall) {
+		case "wochenplan":
+			$this->device->UnregisterMessage(intval($val_parts[1]), VM_UPDATE);
+			break;
+		}
+	}
 	public function set(string $val) : void {
 		throw new Exception("Set for Frontend not implemented");
 	}
@@ -24,9 +48,11 @@ class Frontend extends IPSModule {
 		throw new Exception("SetFloat for Frontend not implemented");
 	}
 
-	protected function set_AN() : void {
+	protected function set_an(bool $doValueSet = true) : void {
 		$this->device->GetBackend()->set(1.0);
-		$this->device->SetValue("Value", "AN");
+		if ($doValueSet) {
+			$this->device->SetValue("Value", "AN");
+		}
 		if ($this::BooleanRepr) {
 			$this->device->SetValue("BooleanRepr", true);
 		}
@@ -34,9 +60,11 @@ class Frontend extends IPSModule {
 			$this->device->SetValue("FloatRepr", 1.0);
 		}
 	}
-	protected function set_AUS() :void {
+	protected function set_aus(bool $doValueSet = true) :void {
 		$this->device->GetBackend()->set(0.0);
-		$this->device->SetValue("Value", "AUS");
+		if ($doValueSet) {
+			$this->device->SetValue("Value", "AUS");
+		}
 		if ($this::BooleanRepr) {
 			$this->device->SetValue("BooleanRepr", false);
 		}
@@ -44,16 +72,30 @@ class Frontend extends IPSModule {
 			$this->device->SetValue("FloatRepr", 0.0);
 		}
 	}
+	// the id is not the Wochenplan itself, but a Stirng modified by the wochenplan
+	protected function set_wochenplan(string $id, bool $doValueSet = true) : void {
+		$id = intval($id);
+		$this->set(GetValueString($id), false);	// set to the current value
+		// get updates from the "wochenplan"
+		$this->device->RegisterMessage($id, VM_UPDATE);
+		if ($doValueSet) {
+			$this->device->SetValue("Value", "WOCHENPLAN:$id");
+		}
 }
 
 class Frontend_SL extends Frontend {
 	const BooleanRepr = true;
-	public function set(string $val) : void {
-		switch ($val) {
-		case "AN":
-		case "AUS":
-			$fun = "set_$val";
-			$this->$fun();
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		switch ($vall) {
+		case "an":
+		case "aus":
+			$fun = "set_$vall";
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->set_wochenplan($val_parts[1], $doValueSet);
 			break;
 		default:
 			throw new Exception("Unknown value $val");
