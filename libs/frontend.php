@@ -90,6 +90,9 @@ class Frontend extends IPSModule {
 		$seconds = $time[0]*60*60 + $time[1]*60 + $time[2];
 		$this->set_AN(false);
 		$this->device->SetTimerInterval("TurnOffTimer", 1000*$seconds);
+		if ($doValueSet) {
+			$this->device->SetValue("Value", "AUSSCHALTVERZOEGERUNG:".implode(":", $time));
+		}
 	}
 }
 
