@@ -23,6 +23,7 @@ class Frontend extends IPSModule {
 			// $Data is not documented so just read it from the variable
 			$this->set(GetValueString($SenderID), false);
 			break;
+		}
 	}
 
 	public function prepareValueChange() : void {
