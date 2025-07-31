@@ -57,6 +57,7 @@ class Frontend_SL extends Frontend {
 			break;
 		default:
 			throw new Exception("Unknown value $val");
+		}
 	}
 	public function setBoolean(bool $val) : void {
 		if ($val) {
