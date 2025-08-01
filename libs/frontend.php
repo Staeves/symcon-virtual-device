@@ -26,6 +26,15 @@ class Frontend extends IPSModule {
 			$this->set($nval, false);
 			$this->device->WriteAttributeString("Subvalue", $nval);
 			break;
+		case "termite":
+			$tmaster = $this->device->ReadPropertyInteger("TermiteMaster");
+			$tval = GetValueBoolean($tmaster);
+			if ($tval) {
+				$this->set_auf(true);
+			} else {
+				$this->set_zu(true);
+			}
+			break;
 		}
 	}
 
@@ -45,6 +54,10 @@ class Frontend extends IPSModule {
 			break;
 		case "ausschaltverzoegerung":
 			$this->device->SetTimerInterval("TurnOffTimer", 0);
+			break;
+		case "termite":
+			$tmaster = $this->device->ReadPropertyInteger("TermiteMaster");
+			$this->device->UnregisterMessage($tmaster, VM_UPDATE);
 			break;
 		}
 	}
@@ -185,7 +198,17 @@ class Frontend extends IPSModule {
 		
 	}
 	protected function set_termite(bool $doValueSet = true) : void {
-		
+		$tmaster = $this->device->ReadPropertyInteger("TermiteMaster");
+		$tval = GetValueBoolean($tmaster);
+		if ($tval) {
+			$this->set_auf(true);
+		} else {
+			$this->set_zu(true);
+		}
+		if ($doValueSet) {
+			$this->device->SetValue("Value", "TERMITE");
+		}
+		$this->device->RegisterMessage($tmaster, VM_UPDATE);
 	}
 }
 
