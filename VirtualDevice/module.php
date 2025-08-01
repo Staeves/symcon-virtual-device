@@ -118,6 +118,9 @@ class VirtualDevice extends IPSModule {
 		if (strtolower(explode(":", $this->GetValue("Value"))[0]) == "ausschaltverzoegerung") {
 			$this->SetTimerInterval("TurnOffTimer", 0);	// turn off timer
 			$this->GetFrontend()->set("AUS");
+		} elseif (strtolower(explode(":", $this->ReadAttributeString("Subvalue"))[0]) == "ausschaltverzoegerung") {
+			$this->SetTimerInterval("TurnOffTimer", 0);	// turn off timer
+			$this->GetFrontend()->set("AUS", false);
 		} else {
 			throw new Exception("Turn off timer triggert, but state is different");
 		}
