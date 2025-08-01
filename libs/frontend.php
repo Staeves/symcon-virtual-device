@@ -34,7 +34,7 @@ class Frontend extends IPSModule {
 		if ($fromSubstate) {
 			$val = $this->device->ReadAttributeString("Subvalue");
 		} else {
-			$val = $this->device->GetValue("Value")
+			$val = $this->device->GetValue("Value");
 		}
 		$val_parts = explode(":", $val);
 		$vall = strtolower($val_parts[0]);
