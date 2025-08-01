@@ -24,7 +24,7 @@ class Frontend extends IPSModule {
 			// $Data is not documented so just read it from the variable
 			$nval = GetValueString($SenderID);
 			$this->set($nval, false);
-			$this->WriteAttributeString("Subvalue", $nval);
+			$this->device->WriteAttributeString("Subvalue", $nval);
 			break;
 		}
 	}
@@ -159,7 +159,7 @@ class Frontend extends IPSModule {
 		$id = intval($id);
 		$nval = GetValueString($id);
 		$this->set($nval, false);	// set to the current value
-		$this->WriteAttributeString("Subvalue", $nval);
+		$this->device->WriteAttributeString("Subvalue", $nval);
 		// get updates from the "wochenplan"
 		$this->device->RegisterMessage($id, VM_UPDATE);
 		if ($doValueSet) {
