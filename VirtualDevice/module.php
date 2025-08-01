@@ -11,11 +11,14 @@ class VirtualDevice extends IPSModule {
 		$this->RegisterTimer("TurnOffTimer", 0, "VirtDev_TimerIsOver($this->InstanceID);");
 
 		$this->RegisterPropertyString("Frontend", "Dummy");
+		$this->RegisterPropertyInteger("TermiteMaster", 0);
 		$this->RegisterPropertyString("Backend", "Dummy");
 		$this->RegisterPropertyInteger("HW_Variable", 0);
 
 		$this->RegisterVariableString("Value", "WERT");
 		$this->EnableAction("Value");
+
+		$this->RegisterAttributeString("Subvalue", "");	// e.g. When Wochenplan to store, what the current value is, to prepare it vor value change
 	}
 
 	// dynamic configurationform
