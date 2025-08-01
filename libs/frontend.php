@@ -29,9 +29,9 @@ class Frontend extends IPSModule {
 		}
 	}
 
-	public function prepareValueChange(bool fromSubstate = false) : void {
+	public function prepareValueChange(bool $fromSubstate = false) : void {
 		// clean up all mesages and simillar, that the current value needed, so we can set a new value
-		if (fromSubstate) {
+		if ($fromSubstate) {
 			$val = $this->device->ReadAttributeString("Subvalue");
 		} else {
 			$val = $this->device->GetValue("Value")
