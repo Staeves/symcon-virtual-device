@@ -5,11 +5,41 @@ class Frontend extends IPSModule {
 	const BooleanRepr = false;
 	const IntegerRepr = false;
 	const FloatRepr = false;
+
+	const NeedsTermiteMaster = false;
+	const NeedsOutsideTempSensor = false;
+	const NeedsMotionSensor = false;
+	const NeedsLatitude = false;
+	const NeedsLongitude = false;
+	const NeedsSunshineStart = false;
+	const NeedsSunshineEnd = false;
 	public function __construct($dev) {
 		$this->device = $dev;
 	}
 	public function getFormPart() {
-		return "";
+		$res = "";
+		if ($this::NeedsTermiteMaster) {
+			$res .= ', {"type": "SelectVariable", "name": "TermiteMaster", "caption": "Termite Master", "validVariableTypes": [1]}';
+		}
+		if ($this::NeedsOutsideTempSensor) {
+			$res .= ', {"type": "SelectVariable", "name": "OutsideTempSensor", "caption": "Temperatur-Sensor-Wert draußen", "validVariableTypes": [1]}';
+		}
+		if ($this::NeedsMotionSensor) {
+			$res .= ', {"type": "SelectVariable", "name": "MotionSensor", "caption": "Bewegungsmelder", "validVariableTypes": [0]}';
+		}
+		if ($this::NeedsLatitude) {
+			$res .= ', {"type": "NumberSpinner", "name": "Latitude", "caption": "Breitengrad", digits: 6}';
+		}
+		if ($this::NeedsLongitude) {
+			$res .= ', {"type": "NumberSpinner", "name": "Longitude", "caption": "Längengrad", digits: 6}';
+		}
+		if ($this::NeedsSunshineStart) {
+			$res .= ', {"type": "ValidationTextBox", "name": "SunshineStart", "caption": "Uhrzeit für frühesten Sonnenschutz"},{"type": "Label", "caption": "Format: HH:MM"}';
+		}
+		if ($this::NeedsSunshineEnd) {
+			$res .= ', {"type": "ValidationTextBox", "name": "SunshineEnd", "caption": "Uhrzeit für spätesten Sonnenschutz"},{"type": "Label", "caption": "Format: HH:MM"}';
+		}
+		return $res;
 	}
 
 	public function MessageSink($TimeStamp, $SenderID, $Message, $Data) : void {
@@ -304,6 +334,7 @@ class Frontend extends IPSModule {
 
 class Frontend_SL extends Frontend {
 	const BooleanRepr = true;
+	const NeedsMotionSensor = true;
 	public function set(string $val, bool $doValueSet = true) : void {
 		$val_parts = explode(":", $val);
 		$vall = strtolower($val_parts[0]);
@@ -330,9 +361,6 @@ class Frontend_SL extends Frontend {
 		} else {
 			$this->set_AUS();
 		}
-	}
-	public function getFormPart() {
-		return ', {"type": "SelectVariable", "name": "MotionSensor", "caption": "Bewegungsmelder", "validVariableTypes": [0]}';
 	}
 
 }
