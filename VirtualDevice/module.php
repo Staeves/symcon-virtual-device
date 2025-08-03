@@ -14,6 +14,7 @@ class VirtualDevice extends IPSModule {
 		$this->RegisterPropertyString("Frontend", "Dummy");
 		$this->RegisterPropertyInteger("TermiteMaster", 0);
 		$this->RegisterPropertyInteger("OutsideTempSensor", 0);
+		$this->RegisterPropertyInteger("MotionSensor", 0);
 		$this->RegisterPropertyFloat("Latitude", 0.0);
 		$this->RegisterPropertyFloat("Longitude", 0.0);
 		$this->RegisterPropertyString("SunshineStart", "10:00");

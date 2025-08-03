@@ -50,6 +50,15 @@ class Frontend extends IPSModule {
 				$this->set_zu(true);
 			}
 			break;
+		case "beibewegung":
+			$msensor = $this->device->ReadPropertyInteger("MotionSensor");
+			if (GetValueBoolean($msensor)) {
+				$this->set_an(false);
+			} else {
+				$this->set_aus(false);
+			}
+			break;
+
 		}
 	}
 
@@ -78,6 +87,9 @@ class Frontend extends IPSModule {
 		case "sonnenschutz":
 			$this->device->SetTimerInterval("UpdateSonnenschutz", 0);
 			break;
+		case "beibewegung":
+			$msensor = $this->device->ReadPropertyInteger("MotionSensor");
+			$this->device->UnregisterMessage($msensor, VM_UPDATE);
 		}
 	}
 	public function set(string $val) : void {
@@ -266,15 +278,26 @@ class Frontend extends IPSModule {
 		$tmaster = $this->device->ReadPropertyInteger("TermiteMaster");
 		$tval = GetValueBoolean($tmaster);
 		if ($tval) {
-			$this->set_schlitze(true);
+			$this->set_schlitze(false);
 		} else {
-			$this->set_zu(true);
+			$this->set_zu(false);
 		}
 		if ($doValueSet) {
 			$this->device->SetValue("Value", "NACHTISOLIERUNG");
 		}
 		$this->device->RegisterMessage($tmaster, VM_UPDATE);
-
+	}
+	protected function set_beibewegung(bool $doValueSet = true) : void {
+		$msensor = $this->device->ReadPropertyInteger("MotionSensor");
+		if (GetValueBoolean($msensor)) {
+			$this->set_an(false);
+		} else {
+			$this->set_aus(false);
+		}
+		if ($doValueSet) {
+			$this->device->SetValue("Value", "BEIBEWEGUNG");
+		}
+		$this->device->RegisterMessage($msensor, VM_UPDATE);
 	}
 
 }
@@ -288,6 +311,7 @@ class Frontend_SL extends Frontend {
 		switch ($vall) {
 		case "an":
 		case "aus":
+		case "beibewegung":
 			$this->$fun($doValueSet);
 			break;
 		case "wochenplan":
@@ -306,6 +330,9 @@ class Frontend_SL extends Frontend {
 		} else {
 			$this->set_AUS();
 		}
+	}
+	public function getFormPart() {
+		return ', {"type": "SelectVariable", "name": "MotionSensor", "caption": "Bewegungsmelder", "validVariableTypes": [0]}';
 	}
 
 }
