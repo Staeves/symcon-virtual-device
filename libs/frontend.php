@@ -15,6 +15,12 @@ class Frontend extends IPSModule {
 	public function MessageSink($TimeStamp, $SenderID, $Message, $Data) : void {
 		$val_parts = explode(":", $this->device->GetValue("Value"));
 		$vall = strtolower($val_parts[0]);
+		// handle case where wochenplan and sender is because of substate
+		if ($vall == "wochenplan" && $SenderID != intval($val_parts[1])) {
+			$val = $this->device->ReadAttributeString("Subvalue");
+			$val_parts = explode(":", $val);
+			$vall = strtolower($val_parts[0]);
+		}
 		switch ($vall) {
 		case "wochenplan":
 			if ($SenderID != intval($val_parts[1])) {
@@ -31,6 +37,15 @@ class Frontend extends IPSModule {
 			$tval = GetValueBoolean($tmaster);
 			if ($tval) {
 				$this->set_auf(true);
+			} else {
+				$this->set_zu(true);
+			}
+			break;
+		case "nachtisolierung":
+			$tmaster = $this->device->ReadPropertyInteger("TermiteMaster");
+			$tval = GetValueBoolean($tmaster);
+			if ($tval) {
+				$this->set_schlitze(true);
 			} else {
 				$this->set_zu(true);
 			}
@@ -56,6 +71,7 @@ class Frontend extends IPSModule {
 			$this->device->SetTimerInterval("TurnOffTimer", 0);
 			break;
 		case "termite":
+		case "nachtisolierung":
 			$tmaster = $this->device->ReadPropertyInteger("TermiteMaster");
 			$this->device->UnregisterMessage($tmaster, VM_UPDATE);
 			break;
@@ -215,12 +231,12 @@ class Frontend extends IPSModule {
 	}
 	protected function set_sonnenschutz(bool $doValueSet = true) : void {
 		if ($doValueSet) {
-			$this->device->SetValue("Value", "TERMITE");
+			$this->device->SetValue("Value", "SONNENSCHUTZ");
 		}
 		$this->device->SetTimerInterval("UpdateSonnenschutz", 1000*60*10);
 		$this->update_sonnenschutz();
 	}
-	protected function update_sonnenschutz() :void {
+	protected function update_sonnenschutz() : void {
 		// is todays max tmp already known? if not get it
 		if (!(in_array("maxTmp", $this->device->GetBufferList()) &&
 			in_array("maxTmpUpdate", $this->device->GetBufferList()) &&
@@ -246,7 +262,20 @@ class Frontend extends IPSModule {
 			$this->set_auf(false);
 		}
 	}
+	protected function set_nachtisolierung(bool $doValueSet = true) : void {
+		$tmaster = $this->device->ReadPropertyInteger("TermiteMaster");
+		$tval = GetValueBoolean($tmaster);
+		if ($tval) {
+			$this->set_schlitze(true);
+		} else {
+			$this->set_zu(true);
+		}
+		if ($doValueSet) {
+			$this->device->SetValue("Value", "NACHTISOLIERUNG");
+		}
+		$this->device->RegisterMessage($tmaster, VM_UPDATE);
 
+	}
 
 }
 
