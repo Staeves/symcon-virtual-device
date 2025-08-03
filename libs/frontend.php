@@ -59,6 +59,9 @@ class Frontend extends IPSModule {
 			$tmaster = $this->device->ReadPropertyInteger("TermiteMaster");
 			$this->device->UnregisterMessage($tmaster, VM_UPDATE);
 			break;
+		case "sonnenschutz":
+			$this->device->SetTimerInterval("UpdateSonnenschutz", 0);
+			break;
 		}
 	}
 	public function set(string $val) : void {
@@ -210,6 +213,41 @@ class Frontend extends IPSModule {
 		}
 		$this->device->RegisterMessage($tmaster, VM_UPDATE);
 	}
+	protected function set_sonnenschutz(bool $doValueSet = true) : void {
+		if ($doValueSet) {
+			$this->device->SetValue("Value", "TERMITE");
+		}
+		$this->device->SetTimerInterval("UpdateSonnenschutz", 1000*60*10);
+		$this->update_sonnenschutz();
+	}
+	protected function update_sonnenschutz() :void {
+		// is todays max tmp already known? if not get it
+		if (!(in_array("maxTmp", $this->device->GetBufferList()) &&
+			in_array("maxTmpUpdate", $this->device->GetBufferList()) &&
+			$this->device->GetBuffer("maxTmpUpdate") == date("Y-m-d"))) {
+			$lat = $this->device->ReadPropertyFloat("Latitude");
+			$long = $this->device->ReadPropertyFloat("Longitude");
+			$data = file_get_contents("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$long&daily=temperature_2m_max&timezone=auto&forecast_days=1");
+			$temp = json_decode($data)['daily']['temperature_2m_max'][0];
+			$this->device->SetBuffer("maxTmp", "$temp");
+			$this->device->SetBuffer("maxTmpUpdate", date("Y-m-d"));
+		} else {
+			$temp = floatval($this->device->GetBufer("maxTmp"));
+		}
+		// If it will be over 27Degree and is over 23 and time in range for this Direction then schlitze, else offen
+		$startTime = str_pad(trim($this->device->ReadPropertyString("SunshineStart")), 5, "0", STR_PAD_LEFT);
+		$endTime = str_pad(trim($this->device->ReadPropertyString("SunshineEnd")), 5, "0", STR_PAD_LEFT);
+		$inTime = strcmp($startTime, date("H:i")) <= 0 && strcmp(date("H:i"), $endTime) <= 0;
+		if ($inTime &&
+			$temp > 27 &&
+			GetValue($this->device->ReadPropertyInteger("OutsideTempSensor")) > 23) {
+			$this->set_schlitze(false);
+		} else {
+			$this->set_auf(false);
+		}
+	}
+
+
 }
 
 class Frontend_SL extends Frontend {

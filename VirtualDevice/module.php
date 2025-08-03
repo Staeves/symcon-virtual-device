@@ -9,9 +9,15 @@ class VirtualDevice extends IPSModule {
 		parent::Create();
 
 		$this->RegisterTimer("TurnOffTimer", 0, "VirtDev_TimerIsOver($this->InstanceID);");
+		$this->RegisterTimer("UpdateSonnenschutz", 0, "VirtDev_UpdateSonnenschutz($this->InstanceID);");
 
 		$this->RegisterPropertyString("Frontend", "Dummy");
 		$this->RegisterPropertyInteger("TermiteMaster", 0);
+		$this->RegisterPropertyInteger("OutsideTempSensor", 0);
+		$this->RegisterPropertyFloat("Latitude", 0.0);
+		$this->RegisterPropertyFloat("Longitude", 0.0);
+		$this->RegisterPropertyString("SunshineStart", "10:00");
+		$this->RegisterPropertyString("SunshineEnd", "17:00");
 		$this->RegisterPropertyString("Backend", "Dummy");
 		$this->RegisterPropertyInteger("HW_Variable", 0);
 
@@ -124,6 +130,10 @@ class VirtualDevice extends IPSModule {
 		} else {
 			throw new Exception("Turn off timer triggert, but state is different");
 		}
+	}
+
+	public function UpdateSonnenschutz() : void {
+		$this->GetFrontend()->update_sonnenschutz();
 	}
 }
 
