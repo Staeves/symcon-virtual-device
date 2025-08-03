@@ -19,19 +19,19 @@ class Frontend extends IPSModule {
 	public function getFormPart() {
 		$res = "";
 		if ($this::NeedsTermiteMaster) {
-			$res .= ', {"type": "SelectVariable", "name": "TermiteMaster", "caption": "Termite Master", "validVariableTypes": [1]}';
+			$res .= ', {"type": "SelectVariable", "name": "TermiteMaster", "caption": "Termite Master", "validVariableTypes": [0]}';
 		}
 		if ($this::NeedsOutsideTempSensor) {
-			$res .= ', {"type": "SelectVariable", "name": "OutsideTempSensor", "caption": "Temperatur-Sensor-Wert draußen", "validVariableTypes": [1]}';
+			$res .= ', {"type": "SelectVariable", "name": "OutsideTempSensor", "caption": "Temperatur-Sensor-Wert draußen", "validVariableTypes": [1,2]}';
 		}
 		if ($this::NeedsMotionSensor) {
 			$res .= ', {"type": "SelectVariable", "name": "MotionSensor", "caption": "Bewegungsmelder", "validVariableTypes": [0]}';
 		}
 		if ($this::NeedsLatitude) {
-			$res .= ', {"type": "NumberSpinner", "name": "Latitude", "caption": "Breitengrad", digits: 6}';
+			$res .= ', {"type": "NumberSpinner", "name": "Latitude", "caption": "Breitengrad", "digits": 6}';
 		}
 		if ($this::NeedsLongitude) {
-			$res .= ', {"type": "NumberSpinner", "name": "Longitude", "caption": "Längengrad", digits: 6}';
+			$res .= ', {"type": "NumberSpinner", "name": "Longitude", "caption": "Längengrad", "digits": 6}';
 		}
 		if ($this::NeedsSunshineStart) {
 			$res .= ', {"type": "ValidationTextBox", "name": "SunshineStart", "caption": "Uhrzeit für frühesten Sonnenschutz"},{"type": "Label", "caption": "Format: HH:MM"}';
@@ -66,18 +66,18 @@ class Frontend extends IPSModule {
 			$tmaster = $this->device->ReadPropertyInteger("TermiteMaster");
 			$tval = GetValueBoolean($tmaster);
 			if ($tval) {
-				$this->set_auf(true);
+				$this->set_auf(false);
 			} else {
-				$this->set_zu(true);
+				$this->set_zu(false);
 			}
 			break;
 		case "nachtisolierung":
 			$tmaster = $this->device->ReadPropertyInteger("TermiteMaster");
 			$tval = GetValueBoolean($tmaster);
 			if ($tval) {
-				$this->set_schlitze(true);
+				$this->set_schlitze(false);
 			} else {
-				$this->set_zu(true);
+				$this->set_zu(false);
 			}
 			break;
 		case "beibewegung":
@@ -126,13 +126,17 @@ class Frontend extends IPSModule {
 		throw new Exception("Set for Frontend not implemented");
 	}
 	public function setBoolean(bool $val) : void {
-		throw new Exception("SetBoolean for Frontend not implemented");
+		if ($val) {
+			$this->set_an();
+		} else {
+			$this->set_aus();
+		}
 	}
 	public function setInteger(int $val) : void {
 		throw new Exception("SetInteger for Frontend not implemented");
 	}
 	public function setFloat(float $val) : void {
-		throw new Exception("SetFloat for Frontend not implemented");
+		$this->set_floatnum($val);
 	}
 
 	protected function set_an(bool $doValueSet = true) : void {
@@ -249,6 +253,10 @@ class Frontend extends IPSModule {
 		}
 	}
 	protected function set_floatnum(float $val, bool $doValueSet = true) : void {
+		# allow percent values in [0;100] and values in [0;1] by mapping to [0;1] if > 1
+		if ($val > 1.0) {
+			$val = $val / 100;
+		}
 		$this->device->GetBackend()->set($val);
 		if ($doValueSet) {
 			$this->device->SetValue("Value", "$val");
@@ -256,15 +264,18 @@ class Frontend extends IPSModule {
 		if ($this::FloatRepr) {
 			$this->device->SetValue("FloatRepr", $val);
 		}
+		if ($this::BooleanRepr) {
+			$this->device->SetValue("BooleanRepr", $val > 0);
+		}
 		
 	}
 	protected function set_termite(bool $doValueSet = true) : void {
 		$tmaster = $this->device->ReadPropertyInteger("TermiteMaster");
 		$tval = GetValueBoolean($tmaster);
 		if ($tval) {
-			$this->set_auf(true);
+			$this->set_auf(false);
 		} else {
-			$this->set_zu(true);
+			$this->set_zu(false);
 		}
 		if ($doValueSet) {
 			$this->device->SetValue("Value", "TERMITE");
@@ -286,11 +297,11 @@ class Frontend extends IPSModule {
 			$lat = $this->device->ReadPropertyFloat("Latitude");
 			$long = $this->device->ReadPropertyFloat("Longitude");
 			$data = file_get_contents("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$long&daily=temperature_2m_max&timezone=auto&forecast_days=1");
-			$temp = json_decode($data)['daily']['temperature_2m_max'][0];
+			$temp = json_decode($data)->daily->temperature_2m_max[0];
 			$this->device->SetBuffer("maxTmp", "$temp");
 			$this->device->SetBuffer("maxTmpUpdate", date("Y-m-d"));
 		} else {
-			$temp = floatval($this->device->GetBufer("maxTmp"));
+			$temp = floatval($this->device->GetBuffer("maxTmp"));
 		}
 		// If it will be over 27Degree and is over 23 and time in range for this Direction then schlitze, else offen
 		$startTime = str_pad(trim($this->device->ReadPropertyString("SunshineStart")), 5, "0", STR_PAD_LEFT);
@@ -332,6 +343,150 @@ class Frontend extends IPSModule {
 
 }
 
+class Frontend_KO extends Frontend {
+	const BooleanRepr = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "an":
+		case "aus":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+}
+class Frontend_BO extends Frontend {
+	const BooleanRepr = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "an":
+		case "aus":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+}
+class Frontend_FK extends Frontend {
+	const FloatRepr = true;
+	const NeedsTermiteMaster = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "auf":
+		case "zu":
+		case "termite":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		default:
+			if (is_numeric($vall)) {
+				$this->set_floatnum(floatval($vall));
+			} else {
+				throw new Exception("Unknown value $val");
+			}
+		}
+	}
+}
+class Frontend_AK extends Frontend {
+	const BooleanRepr = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "an":
+		case "aus":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+}
+class Frontend_du extends Frontend {	// TODO setinteger and stufe:XY
+	const IntegerRepr = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "aus":
+			$this->$fun($doValueSet);
+			break;
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+}
+class Frontend_LU extends Frontend {	// TODO setinteger and stufe:XY
+	const IntegerRepr = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "aus":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+}
+class Frontend_DL extends Frontend {	// TODO Konstantlicht, % in s, stopp
+	const BooleanRepr = true;
+	const FloatRepr = true;
+	const NeedsMotionSensor = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "an":
+		case "aus":
+		case "beibewegung":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		case "ausschaltverzoegerung":
+			$this->$fun(array_slice($val_parts, 1), $doValueSet);
+			break;
+		default:
+			if (is_numeric($vall)) {
+				$this->set_floatnum(floatval($vall));
+			} else {
+				throw new Exception("Unknown value $val");
+			}
+		}
+	}
+}
 class Frontend_SL extends Frontend {
 	const BooleanRepr = true;
 	const NeedsMotionSensor = true;
@@ -355,13 +510,283 @@ class Frontend_SL extends Frontend {
 			throw new Exception("Unknown value $val");
 		}
 	}
-	public function setBoolean(bool $val) : void {
-		if ($val) {
-			$this->set_AN();
-		} else {
-			$this->set_AUS();
+}
+class Frontend_BL extends Frontend {	// TODO Konstantlicht, % in s, stopp, farbe:int, play, status
+	const BooleanRepr = true;
+	const FloatRepr = true;
+	const NeedsMotionSensor = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "an":
+		case "aus":
+		case "beibewegung":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		case "ausschaltverzoegerung":
+			$this->$fun(array_slice($val_parts, 1), $doValueSet);
+			break;
+		default:
+			if (is_numeric($vall)) {
+				$this->set_floatnum(floatval($vall));
+			} else {
+				throw new Exception("Unknown value $val");
+			}
 		}
 	}
-
 }
-
+class Frontend_HZ extends Frontend {	// TODO setInteger, Zahl
+	const IntegerRepr = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "an":
+		case "aus":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+}
+class Frontend_ST extends Frontend {
+	const BooleanRepr = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "an":
+		case "aus":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		case "ausschaltverzoegerung":
+			$this->$fun(array_slice($val_parts, 1), $doValueSet);
+			break;
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+}
+class Frontend_RA extends Frontend {	// TODO Konstantlicht, stopp, dunkel
+	const FloatRepr = true;
+	const NeedsTermiteMaster = true;
+	const NeedsOutsideTempSensor = true;
+	const NeedsLatitude = true;
+	const NeedsLongitude = true;
+	const NeedsSunshineStart = true;
+	const NeedsSunshineEnd = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "auf":
+		case "ab":
+		case "zu":
+		case "schlitze":
+		case "sonnenschutz":
+		case "nachtisolierung":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		default:
+			if (is_numeric($vall)) {
+				$this->set_floatnum(floatval($vall));
+			} else {
+				throw new Exception("Unknown value $val");
+			}
+		}
+	}
+}
+class Frontend_PC extends Frontend {	// TODO turn off protection when running
+	const BooleanRepr = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "an":
+		case "aus":
+			$this->$fun($doValueSet);
+			break;
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+}
+class Frontend_AS extends Frontend {	// TODO Stopp, play, status
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+}
+class Frontend_LS extends Frontend {	// TODO Stopp, play, status
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+}
+class Frontend_SA extends Frontend {	// TODO status
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+}
+class Frontend_TA extends Frontend {	// TODO stopp
+	const BooleanRepr = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "auf":
+		case "zu":
+			$this->$fun($doValueSet);
+			break;
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+	// boolean setting should be auf/zu unlike the default
+	public function setBoolean(bool $val) : void {
+		if ($val) {
+			$this->set_auf();
+		} else {
+			$this->set_zu();
+		}
+	}
+}
+class Frontend_MA extends Frontend {	// TODO stopp
+	const FloatRepr = true;
+	const NeedsOutsideTempSensor = true;
+	const NeedsLatitude = true;
+	const NeedsLongitude = true;
+	const NeedsSunshineStart = true;
+	const NeedsSunshineEnd = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "sonnenschutz":
+		case "ausgefahren":
+		case "eingefahren":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		default:
+			if (is_numeric($vall)) {
+				$this->set_floatnum(floatval($vall));
+			} else {
+				throw new Exception("Unknown value $val");
+			}
+		}
+	}
+}
+class Frontend_VO extends Frontend {	// TODO stopp
+	const FloatRepr = true;
+	const NeedsOutsideTempSensor = true;
+	const NeedsLatitude = true;
+	const NeedsLongitude = true;
+	const NeedsSunshineStart = true;
+	const NeedsSunshineEnd = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "sonnenschutz":
+		case "auf":
+		case "ab":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		default:
+			if (is_numeric($vall)) {
+				$this->set_floatnum(floatval($vall));
+			} else {
+				throw new Exception("Unknown value $val");
+			}
+		}
+	}
+}
+class Frontend_WS extends Frontend {	// TODO stopp
+	const FloatRepr = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "auf":
+		case "ab":
+			$this->$fun($doValueSet);
+			break;
+		default:
+			if (is_numeric($vall)) {
+				$this->set_floatnum(floatval($vall));
+			} else {
+				throw new Exception("Unknown value $val");
+			}
+		}
+	}
+}
+class Frontend_NE extends Frontend {	// TODO setInteger, Zahl
+	const IntegerRepr = true;
+	public function set(string $val, bool $doValueSet = true) : void {
+		$val_parts = explode(":", $val);
+		$vall = strtolower($val_parts[0]);
+		$fun = "set_$vall";
+		switch ($vall) {
+		case "an":
+		case "aus":
+			$this->$fun($doValueSet);
+			break;
+		case "wochenplan":
+			$this->$fun($val_parts[1], $doValueSet);
+			break;
+		default:
+			throw new Exception("Unknown value $val");
+		}
+	}
+}

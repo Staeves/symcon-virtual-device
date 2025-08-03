@@ -35,7 +35,27 @@ class VirtualDevice extends IPSModule {
 			{"type": "Select", "name": "Frontend", "caption": "Geräte Typ",
 				"options": [
 					{ "caption": "Dummy", "value": "Dummy" },
-					{ "caption": "Schaltbares Licht", "value": "sl" }
+					{ "caption": "Kochplatte", "value": "ko" },
+					{ "caption": "Backofen", "value": "bo" },
+					{ "caption": "Fensterkipper", "value": "fk" },
+					{ "caption": "Akku", "value": "ak" },
+					{ "caption": "Dunstabzugshaube", "value": "du" },
+					{ "caption": "Lüftung", "value": "lu" },
+					{ "caption": "Dimmbares Licht", "value": "dl" },
+					{ "caption": "Schaltbares Licht", "value": "sl" },
+					{ "caption": "RGB-Licht", "value": "bl" },
+					{ "caption": "Heizung", "value": "hz" },
+					{ "caption": "Steckdose", "value": "st" },
+					{ "caption": "Rolladen", "value": "ra" },
+					{ "caption": "PC", "value": "pc" },
+					{ "caption": "Soundsignal", "value": "as" },
+					{ "caption": "Lichtsignal", "value": "ls" },
+					{ "caption": "Statusanzeige", "value": "sa" },
+					{ "caption": "Torantrieb", "value": "ta" },
+					{ "caption": "Markise", "value": "ma" },
+					{ "caption": "Volant", "value": "vo" },
+					{ "caption": "Wäscheständer", "value": "ws" },
+					{ "caption": "Nebler", "value": "ne" }
 				]
 			},
 			{"type": "Label", 
@@ -88,7 +108,7 @@ class VirtualDevice extends IPSModule {
 		case "IntegerRepr":
 			$fe->setInteger($Value);
 			break;
-		case "loatRepr":
+		case "FloatRepr":
 			$fe->setFloat($Value);
 			break;
 		default:
@@ -102,11 +122,13 @@ class VirtualDevice extends IPSModule {
 	}
 
 	public function GetFrontend() : Frontend {
-		switch ($this->ReadPropertyString("Frontend")) {
-		case "sl":
-			return new Frontend_SL($this);
-		default:
+		$fe = $this->ReadPropertyString("Frontend");
+		if ($fe == 'Dummy') {
 			return new Frontend($this);
+		} else {
+			$fe = strtoupper($fe);
+			$name = "Frontend_$fe";	
+			return new $name($this);
 		}
 	}
 
