@@ -32,6 +32,8 @@ class VirtualDevice extends IPSModule {
 	
 	public function GetConfigurationForm () : string {
 		$res = '{ "elements": [
+			{ "type": "RowLayout", "items": [ 
+			{ "type": "ColumnLayout", "items": [
 			{"type": "Select", "name": "Frontend", "caption": "Geräte Typ",
 				"options": [
 					{ "caption": "Dummy", "value": "Dummy" },
@@ -59,8 +61,9 @@ class VirtualDevice extends IPSModule {
 				]
 			},
 			{"type": "Label", 
-				"caption": "Beim Ändern des Geräte Typ bitte die Einstellung direkt übernehmen, da sich andere Einstellungen dadurch womöglich ändern können"
-			} ' . $this->GetFrontend()->GetFormPart() .' ,
+				"caption": "Beim Ändern "
+			} ' . $this->GetFrontend()->GetFormPart() .' 
+			]} , { "type": "ColumnLayout", "items": [
 			{"type": "Select", "name": "Backend", "caption": "Backend Typ",
 				"options": [
 					{ "caption": "Dummy", "value": "Dummy"},
@@ -69,8 +72,8 @@ class VirtualDevice extends IPSModule {
 				]
 			},
 			{"type": "Label", 
-				"caption": "Beim Ändern des Backend Typ bitte die Einstellung direkt übernehmen, da sich andere Einstellungen dadurch womöglich ändern können"
-			} ' . $this->GetBackend()->GetFormPart() .' ]}';
+				"caption": "Beim Ändern "
+			} ' . $this->GetBackend()->GetFormPart() .']} ]} ]}';
 		return $res;
 	}
 
