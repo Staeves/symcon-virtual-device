@@ -1,0 +1,14 @@
+{
+    "id": "{FE5AAE00-92DF-96C3-7435-2CAEBCF1CB62}",
+    "name": "Virtual Device Settings",
+    "type": 4,
+    "vendor": "VirtDevice",
+    "url": "https://github.com/Staeves/symcon-virtual-device",
+    "aliases": [
+        "Virtual Device Settings"
+    ],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "VirtDevSettings"
+}

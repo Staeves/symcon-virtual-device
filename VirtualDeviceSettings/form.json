@@ -1,0 +1,7 @@
+{
+	"elements": [
+		{"type": "SelectVariable", "name": "TermiteMaster", "caption": "Termite Master", "validVariableTypes": [0]}, 
+		{"type": "SelectVariable", "name": "OutsideTempSensor", "caption": "Temperatur-Sensor-Wert draußen", "validVariableTypes": [1,2]}, 
+		{ "type": "SelectLocation", "name": "Location", "caption": "Ort" }
+	]
+}

@@ -9,8 +9,7 @@ class Frontend extends IPSModule {
 	const NeedsTermiteMaster = false;
 	const NeedsOutsideTempSensor = false;
 	const NeedsMotionSensor = false;
-	const NeedsLatitude = false;
-	const NeedsLongitude = false;
+	const NeedsLocation = false;
 	const NeedsSunshineStart = false;
 	const NeedsSunshineEnd = false;
 	public function __construct($dev) {
@@ -18,20 +17,17 @@ class Frontend extends IPSModule {
 	}
 	public function getFormPart() {
 		$res = "";
-		if ($this::NeedsTermiteMaster) {
+		if ($this::NeedsTermiteMaster and !$this->device->ReadPropertyBoolean("UseSettings")) {
 			$res .= ', {"type": "SelectVariable", "name": "TermiteMaster", "caption": "Termite Master", "validVariableTypes": [0]}';
 		}
-		if ($this::NeedsOutsideTempSensor) {
+		if ($this::NeedsOutsideTempSensor and !$this->device->ReadPropertyBoolean("UseSettings")) {
 			$res .= ', {"type": "SelectVariable", "name": "OutsideTempSensor", "caption": "Temperatur-Sensor-Wert draußen", "validVariableTypes": [1,2]}';
 		}
 		if ($this::NeedsMotionSensor) {
 			$res .= ', {"type": "SelectVariable", "name": "MotionSensor", "caption": "Bewegungsmelder", "validVariableTypes": [0]}';
 		}
-		if ($this::NeedsLatitude) {
-			$res .= ', {"type": "NumberSpinner", "name": "Latitude", "caption": "Breitengrad", "digits": 6}';
-		}
-		if ($this::NeedsLongitude) {
-			$res .= ', {"type": "NumberSpinner", "name": "Longitude", "caption": "Längengrad", "digits": 6}';
+		if ($this::NeedsLocation and !$this->device->ReadPropertyBoolean("UseSettings")) {
+			$res .= ', { "type": "SelectLocation", "name": "Location", "caption": "Ort" }';
 		}
 		if ($this::NeedsSunshineStart) {
 			$res .= ', {"type": "ValidationTextBox", "name": "SunshineStart", "caption": "Uhrzeit für frühesten Sonnenschutz"},{"type": "Label", "caption": "Format: HH:MM"}';
@@ -294,8 +290,9 @@ class Frontend extends IPSModule {
 		if (!(in_array("maxTmp", $this->device->GetBufferList()) &&
 			in_array("maxTmpUpdate", $this->device->GetBufferList()) &&
 			$this->device->GetBuffer("maxTmpUpdate") == date("Y-m-d"))) {
-			$lat = $this->device->ReadPropertyFloat("Latitude");
-			$long = $this->device->ReadPropertyFloat("Longitude");
+			$location = json_decode($this->device->ReadPropertyString("Location"));
+			$lat = $location->latitude;
+			$long = $location->longitude;
 			$data = file_get_contents("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$long&daily=temperature_2m_max&timezone=auto&forecast_days=1");
 			$temp = json_decode($data)->daily->temperature_2m_max[0];
 			$this->device->SetBuffer("maxTmp", "$temp");
@@ -585,8 +582,7 @@ class Frontend_RA extends Frontend {	// TODO Konstantlicht, stopp, dunkel
 	const FloatRepr = true;
 	const NeedsTermiteMaster = true;
 	const NeedsOutsideTempSensor = true;
-	const NeedsLatitude = true;
-	const NeedsLongitude = true;
+	const NeedsLocation = true;
 	const NeedsSunshineStart = true;
 	const NeedsSunshineEnd = true;
 	public function set(string $val, bool $doValueSet = true) : void {
@@ -696,8 +692,7 @@ class Frontend_TA extends Frontend {	// TODO stopp
 class Frontend_MA extends Frontend {	// TODO stopp
 	const FloatRepr = true;
 	const NeedsOutsideTempSensor = true;
-	const NeedsLatitude = true;
-	const NeedsLongitude = true;
+	const NeedsLocation = true;
 	const NeedsSunshineStart = true;
 	const NeedsSunshineEnd = true;
 	public function set(string $val, bool $doValueSet = true) : void {
@@ -725,8 +720,7 @@ class Frontend_MA extends Frontend {	// TODO stopp
 class Frontend_VO extends Frontend {	// TODO stopp
 	const FloatRepr = true;
 	const NeedsOutsideTempSensor = true;
-	const NeedsLatitude = true;
-	const NeedsLongitude = true;
+	const NeedsLocation = true;
 	const NeedsSunshineStart = true;
 	const NeedsSunshineEnd = true;
 	public function set(string $val, bool $doValueSet = true) : void {

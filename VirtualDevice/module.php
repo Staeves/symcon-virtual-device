@@ -11,12 +11,24 @@ class VirtualDevice extends IPSModule {
 		$this->RegisterTimer("TurnOffTimer", 0, "VirtDev_TimerIsOver($this->InstanceID);");
 		$this->RegisterTimer("UpdateSonnenschutz", 0, "VirtDev_UpdateSonnenschutz($this->InstanceID);");
 
+		// if a settings Instance exists, use that as default
+		$settings = IPS_GetInstanceListByModuleID("{FE5AAE00-92DF-96C3-7435-2CAEBCF1CB62}");
+		if (count($settings) > 0) {
+			$vals = VirtDevSettings_GetSettings($settings[0]);
+		} else {
+			$vals = array (
+				"TermiteMaster" => 0,
+				"OutsideTempSensor" => 0,
+				"Location" => '{"latitude":0.0, "longitude": 0.0}'
+			);
+		}
+
 		$this->RegisterPropertyString("Frontend", "Dummy");
-		$this->RegisterPropertyInteger("TermiteMaster", 0);
-		$this->RegisterPropertyInteger("OutsideTempSensor", 0);
+		$this->RegisterPropertyBoolean("UseSettings", true);
+		$this->RegisterPropertyInteger("TermiteMaster", $vals["TermiteMaster"]);
+		$this->RegisterPropertyInteger("OutsideTempSensor", $vals["OutsideTempSensor"]);
 		$this->RegisterPropertyInteger("MotionSensor", 0);
-		$this->RegisterPropertyFloat("Latitude", 0.0);
-		$this->RegisterPropertyFloat("Longitude", 0.0);
+		$this->RegisterPropertyString("Location", $vals["Location"]);
 		$this->RegisterPropertyString("SunshineStart", "10:00");
 		$this->RegisterPropertyString("SunshineEnd", "17:00");
 		$this->RegisterPropertyString("Backend", "Dummy");
@@ -32,6 +44,9 @@ class VirtualDevice extends IPSModule {
 	
 	public function GetConfigurationForm () : string {
 		$res = '{ "elements": [
+			{"type": "Label", 
+				"caption": "Nach dem Übernehemen der Einstellungen können neue Optionen erscheinen!"
+			},
 			{ "type": "RowLayout", "items": [ 
 			{ "type": "ColumnLayout", "items": [
 			{"type": "Select", "name": "Frontend", "caption": "Geräte Typ",
@@ -60,9 +75,8 @@ class VirtualDevice extends IPSModule {
 					{ "caption": "Nebler", "value": "ne" }
 				]
 			},
-			{"type": "Label", 
-				"caption": "Beim Ändern "
-			} ' . $this->GetFrontend()->GetFormPart() .' 
+			{ "type": "CheckBox", "name": "UseSettings", "caption": "Nutze VirtualDeviceSettings" }
+			 ' . $this->GetFrontend()->GetFormPart() .' 
 			]} , { "type": "ColumnLayout", "items": [
 			{"type": "Select", "name": "Backend", "caption": "Backend Typ",
 				"options": [
@@ -79,6 +93,16 @@ class VirtualDevice extends IPSModule {
 
 	// Overwrites the internal IPS_ApplyChanges($id) function
 	public function ApplyChanges(): void {
+		if ($this->ReadPropertyBoolean("UseSettings")) {
+			// if a settings Instance exists, use that
+			$settings = IPS_GetInstanceListByModuleID("{FE5AAE00-92DF-96C3-7435-2CAEBCF1CB62}");
+			if (count($settings) > 0) {
+				$vals = VirtDevSettings_GetSettings($settings[0]);
+				foreach($vals as $key => $val) {
+					IPS_SetProperty($this->InstanceID, $key, $val);	// will be applied, as we are at the beginning of the apply function
+				}
+			}
+		}
 		// Don't delete this line
 		parent::ApplyChanges();
 		// add or remove variables according to frontend
@@ -143,6 +167,12 @@ class VirtualDevice extends IPSModule {
 			return new Backend_IPS_Float($this);
 		default:
 			return new Backend();
+		}
+	}
+
+	public function UpdateGlobalSettings() : void {
+		if ($this->ReadPropertyBoolean("UseSettings")) {
+			$this->ApplyChanges();	// loads values anyways
 		}
 	}
 
