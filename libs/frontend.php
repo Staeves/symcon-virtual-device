@@ -527,10 +527,10 @@ class Frontend_DL extends Frontend {	// TODO Konstantlicht
 			break;
 		default:
 			if (is_numeric($vall)) {
-				if (sizeof($vall_parts) == 1) {
+				if (sizeof($val_parts) == 1) {
 					$this->set_floatnum(floatval($vall), $doValueSet);
 				} else {
-					$this->set_floatnum_in(floatval($vall), floatval($vall_parts[1]), $doValueSet);
+					$this->set_floatnum_in(floatval($vall), floatval($val_parts[1]), $doValueSet);
 				}
 			} else {
 				throw new Exception("Unknown value $val");
@@ -584,10 +584,10 @@ class Frontend_BL extends Frontend {	// TODO Konstantlicht, % in s, stopp, farbe
 			break;
 		default:
 			if (is_numeric($vall)) {
-				if (sizeof($vall_parts) == 1) {
+				if (sizeof($val_parts) == 1) {
 					$this->set_floatnum(floatval($vall), $doValueSet);
 				} else {
-					$this->set_floatnum_in(floatval($vall), floatval($vall_parts[1]), $doValueSet);
+					$this->set_floatnum_in(floatval($vall), floatval($val_parts[1]), $doValueSet);
 				}
 			} else {
 				throw new Exception("Unknown value $val");
