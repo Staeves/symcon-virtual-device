@@ -531,6 +531,7 @@ class Frontend_DL extends Frontend {	// TODO Konstantlicht
 					$this->set_floatnum(floatval($vall), $doValueSet);
 				} else {
 					$this->set_floatnum_in(floatval($vall), floatval($vall_parts[1]), $doValueSet);
+				}
 			} else {
 				throw new Exception("Unknown value $val");
 			}
@@ -587,6 +588,7 @@ class Frontend_BL extends Frontend {	// TODO Konstantlicht, % in s, stopp, farbe
 					$this->set_floatnum(floatval($vall), $doValueSet);
 				} else {
 					$this->set_floatnum_in(floatval($vall), floatval($vall_parts[1]), $doValueSet);
+				}
 			} else {
 				throw new Exception("Unknown value $val");
 			}
