@@ -59,7 +59,7 @@ class Backend_IPS_Float extends Backend_IPS {
 
 class Backend_HM extends Backend {
 	public function getFormPart() {
-		return ', {"type": "SelectInstance", "name": "HW_Variable", "caption": "HM Instance"}' . parent::getFormPart();
+		return ', {"type": "SelectInstance", "name": "HW_Variable", "caption": "HomeMatic Instance"}' . parent::getFormPart();
 	}
 	public function set(float $val) {
 		$this->int_set( $this->device->ReadPropertyBoolean("Inverted") ? 1 - $val : $val );
@@ -166,6 +166,7 @@ class Backend_HM extends Backend {
  * HMW-LC-Sw2-DR		3-4
  */
 class Backend_HM_Boolean extends Backend_HM {
+	const Invertable = true;
 	public function int_set(float $val) {
 		HM_WriteValueBoolean($this->device->ReadPropertyInteger("HW_Variable"), "STATE", $val > 0);
 	}
