@@ -62,10 +62,10 @@ class Backend_HM extends Backend {
 		return ', {"type": "SelectInstance", "name": "HW_Variable", "caption": "HM Instance"}' . parent::getFormPart();
 	}
 	public function set(float $val) {
-		$this->set( $this->device->ReadPropertyBoolean("Inverted") ? 1 - $val : $val );
+		$this->int_set( $this->device->ReadPropertyBoolean("Inverted") ? 1 - $val : $val );
 	}
 	public function get() : float {
-		$val = $this->get();
+		$val = $this->int_get();
 		return $this->device->ReadPropertyBoolean("Inverted") ? 1 - $val : $val;
 	}
 }
