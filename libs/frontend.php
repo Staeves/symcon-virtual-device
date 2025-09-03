@@ -84,6 +84,26 @@ class Frontend extends IPSModule {
 				$this->set_aus(false);
 			}
 			break;
+		case "stopp":
+			$be = $this->device->GetBackend();
+			$working_id = $be->getWorkingID();
+			if (GetValue($working_id)) {
+				break;
+			}
+			$this->device->UnregisterMessage($working_id, VM_UPDATE);
+			usleep(100000);
+			$val = $be->get();
+			// like doValueSet, because it is set to stopp iff we wanted to set the value
+			if (strtolower($this->device->GetValue("Value")) == "stopp") {
+				$this->device->SetValue("Value", "$val");
+			}
+			if ($this::BooleanRepr) {
+				$this->device->SetValue("BooleanRepr", $val > 0);
+			}
+			if ($this::FloatRepr) {
+				$this->device->SetValue("FloatRepr", $val);
+			}
+			break;
 
 		}
 	}
@@ -116,6 +136,11 @@ class Frontend extends IPSModule {
 		case "beibewegung":
 			$msensor = $this->device->ReadPropertyInteger("MotionSensor");
 			$this->device->UnregisterMessage($msensor, VM_UPDATE);
+			break;
+		case "stopp":
+			$working_id = $this->device->GetBackend()->getWorkingID();
+			$this->device->UnregisterMessage($working_id, VM_UPDATE);
+			break;
 		}
 	}
 	public function set(string $val) : void {
@@ -265,6 +290,30 @@ class Frontend extends IPSModule {
 		}
 		
 	}
+	// requires set_in in backend
+	protected function set_floatnum_in(float $val, float $time, bool $doValueSet = true) : void {
+		# allow percent values in [0;100] and values in [0;1] by mapping to [0;1] if > 1
+		if ($val > 1.0) {
+			$val = $val / 100;
+		}
+		$this->device->GetBackend()->set_in($val, $time);
+		if ($doValueSet) {
+			$this->device->SetValue("Value", "$val:$time");
+		}
+		if ($this::FloatRepr) {
+			$this->device->SetValue("FloatRepr", $val);
+		}
+		if ($this::BooleanRepr) {
+			$this->device->SetValue("BooleanRepr", $val > 0);
+		}
+	}
+	protected function set_stopp(bool $doValueSet = true) : void {
+		$working_id = $this->device->GetBackend()->stop();
+		if ($doValueSet) {
+			$this->device->SetValue("Value", "STOPP");
+		}
+		$this->device->RegisterMessage($working_id, VM_UPDATE);
+	}
 	protected function set_termite(bool $doValueSet = true) : void {
 		$tmaster = $this->device->ReadPropertyInteger("TermiteMaster");
 		$tval = GetValueBoolean($tmaster);
@@ -396,7 +445,7 @@ class Frontend_FK extends Frontend {
 			break;
 		default:
 			if (is_numeric($vall)) {
-				$this->set_floatnum(floatval($vall));
+				$this->set_floatnum(floatval($vall), $doValueSet);
 			} else {
 				throw new Exception("Unknown value $val");
 			}
@@ -455,7 +504,7 @@ class Frontend_LU extends Frontend {	// TODO setinteger and stufe:XY
 		}
 	}
 }
-class Frontend_DL extends Frontend {	// TODO Konstantlicht, % in s, stopp
+class Frontend_DL extends Frontend {	// TODO Konstantlicht
 	const BooleanRepr = true;
 	const FloatRepr = true;
 	const NeedsMotionSensor = true;
@@ -467,6 +516,7 @@ class Frontend_DL extends Frontend {	// TODO Konstantlicht, % in s, stopp
 		case "an":
 		case "aus":
 		case "beibewegung":
+		case "stopp":
 			$this->$fun($doValueSet);
 			break;
 		case "wochenplan":
@@ -477,7 +527,10 @@ class Frontend_DL extends Frontend {	// TODO Konstantlicht, % in s, stopp
 			break;
 		default:
 			if (is_numeric($vall)) {
-				$this->set_floatnum(floatval($vall));
+				if (sizeof($vall_parts) == 1) {
+					$this->set_floatnum(floatval($vall), $doValueSet);
+				else {
+					$this->set_floatnum_in(floatval($vall), floatval($vall_parts[1]), $doValueSet);
 			} else {
 				throw new Exception("Unknown value $val");
 			}
@@ -530,7 +583,10 @@ class Frontend_BL extends Frontend {	// TODO Konstantlicht, % in s, stopp, farbe
 			break;
 		default:
 			if (is_numeric($vall)) {
-				$this->set_floatnum(floatval($vall));
+				if (sizeof($vall_parts) == 1) {
+					$this->set_floatnum(floatval($vall), $doValueSet);
+				else {
+					$this->set_floatnum_in(floatval($vall), floatval($vall_parts[1]), $doValueSet);
 			} else {
 				throw new Exception("Unknown value $val");
 			}
@@ -603,7 +659,7 @@ class Frontend_RA extends Frontend {	// TODO Konstantlicht, stopp, dunkel
 			break;
 		default:
 			if (is_numeric($vall)) {
-				$this->set_floatnum(floatval($vall));
+				$this->set_floatnum(floatval($vall), $doValueSet);
 			} else {
 				throw new Exception("Unknown value $val");
 			}
@@ -710,7 +766,7 @@ class Frontend_MA extends Frontend {	// TODO stopp
 			break;
 		default:
 			if (is_numeric($vall)) {
-				$this->set_floatnum(floatval($vall));
+				$this->set_floatnum(floatval($vall), $doValueSet);
 			} else {
 				throw new Exception("Unknown value $val");
 			}
@@ -738,7 +794,7 @@ class Frontend_VO extends Frontend {	// TODO stopp
 			break;
 		default:
 			if (is_numeric($vall)) {
-				$this->set_floatnum(floatval($vall));
+				$this->set_floatnum(floatval($vall), $doValueSet);
 			} else {
 				throw new Exception("Unknown value $val");
 			}
@@ -758,7 +814,7 @@ class Frontend_WS extends Frontend {	// TODO stopp
 			break;
 		default:
 			if (is_numeric($vall)) {
-				$this->set_floatnum(floatval($vall));
+				$this->set_floatnum(floatval($vall), $doValueSet);
 			} else {
 				throw new Exception("Unknown value $val");
 			}

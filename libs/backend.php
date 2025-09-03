@@ -189,7 +189,7 @@ class Backend_HM_Float extends Backend_HM {
 	}
 	public function int_get() : float {
 		$inst_id = $this->device->ReadPropertyInteger("HW_Variable");
-		return GetValueFloat(IPS_GetObjectIDByIdent("STATE", $inst_id));
+		return GetValueFloat(IPS_GetObjectIDByIdent("LEVEL", $inst_id));
 	}
 }
 
@@ -233,6 +233,24 @@ class Backend_HM_Float extends Backend_HM {
  * HM-LC-DW-WM
  * OLIGO.smart.iq.HM
  */
+class Backend_HM_Dimmer extends Backend_HM_Float {
+	const Invertable = true;
+	public function set_in(float $val, float $ramp_time) {
+		$inst_id = $this->device->ReadPropertyInteger("HW_Variable");
+		HM_WriteValueFloat($inst_id, "RAMP_TIME", $ramp_time);
+		$this->set($val);
+		HM_WriteValueFloat($inst_id, "RAMP_TIME", 0.5);	// reset to default
+	}
+	public function stop() {
+		$inst_id = $this->device->ReadPropertyInteger("HW_Variable");
+		HM_WriteValueBoolean($inst_id, "STOP", true);
+		return IPS_GetObjectIDByIdent("WORKING", $inst_id);
+	}
+	public function getWorkingID() : int {
+		$inst_id = $this->device->ReadPropertyInteger("HW_Variable");
+		return IPS_GetObjectIDByIdent("WORKING", $inst_id);
+	}
+}
 
 /*
  * rgbX
