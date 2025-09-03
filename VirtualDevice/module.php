@@ -33,6 +33,7 @@ class VirtualDevice extends IPSModule {
 		$this->RegisterPropertyString("SunshineEnd", "17:00");
 		$this->RegisterPropertyString("Backend", "Dummy");
 		$this->RegisterPropertyInteger("HW_Variable", 0);
+		$this->RegisterPropertyBoolean("Inverted", false);
 
 		$this->RegisterVariableString("Value", "WERT");
 		$this->EnableAction("Value");
@@ -82,11 +83,9 @@ class VirtualDevice extends IPSModule {
 				"options": [
 					{ "caption": "Dummy", "value": "Dummy"},
 					{ "caption": "IPS Boolean", "value": "IPS_Boolean"},
-					{ "caption": "IPS Float", "value": "IPS_Float"}
+					{ "caption": "IPS Float", "value": "IPS_Float"},
+					{ "caption": "HomeMatic Binary State", "value": "HM_Boolean"}
 				]
-			},
-			{"type": "Label", 
-				"caption": "Beim Ändern "
 			} ' . $this->GetBackend()->GetFormPart() .']} ]} ]}';
 		return $res;
 	}
@@ -160,13 +159,12 @@ class VirtualDevice extends IPSModule {
 	}
 
 	public function GetBackend() : Backend {
-		switch ($this->ReadPropertyString("Backend")) {
-		case "IPS_Boolean":
-			return new Backend_IPS_Boolean($this);
-		case "IPS_Float":
-			return new Backend_IPS_Float($this);
-		default:
-			return new Backend();
+		$be = $this->ReadPropertyString("Backend");
+		if ($be == 'Dummy') {
+			return new Backend($this);
+		} else {
+			$name = "Backend_$be";	
+			return new $name($this);
 		}
 	}
 

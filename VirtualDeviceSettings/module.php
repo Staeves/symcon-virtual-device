@@ -15,7 +15,7 @@ class VirtualDeviceSettings extends IPSModule {
 	public function Create(): void {
 		// There can only be one
 		if (count(IPS_GetInstanceListByModuleID("{FE5AAE00-92DF-96C3-7435-2CAEBCF1CB62}")) > 1) {
-			throw new Exception("There can only be one VirtualDeviceSettings, please delete this one");
+			throw new Exception("There can only be one VirtualDeviceSettings and there already exists one");
 		}
 		// Don't delete this line
 		parent::Create();
