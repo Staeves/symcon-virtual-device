@@ -243,7 +243,7 @@ class Backend_HM_Dimmer extends Backend_HM_Float {
 	}
 	public function stop() {
 		$inst_id = $this->device->ReadPropertyInteger("HW_Variable");
-		HM_WriteValueBoolean($inst_id, "STOP", true);
+		HM_WriteValueBoolean($inst_id, "RAMP_STOP", true);
 		return IPS_GetObjectIDByIdent("WORKING", $inst_id);
 	}
 	public function getWorkingID() : int {
