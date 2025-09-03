@@ -182,6 +182,16 @@ class Backend_HM_Boolean extends Backend_HM {
  *
  * HMW-LC-Dim1L-DR		3
  */
+class Backend_HM_Float extends Backend_HM {
+	const Invertable = true;
+	public function int_set(float $val) {
+		HM_WriteValueFloat($this->device->ReadPropertyInteger("HW_Variable"), "LEVEL", $val);
+	}
+	public function int_get() : float {
+		$inst_id = $this->device->ReadPropertyInteger("HW_Variable");
+		return GetValueFloat(IPS_GetObjectIDByIdent("STATE", $inst_id));
+	}
+}
 
 /*
  * dimmer:
