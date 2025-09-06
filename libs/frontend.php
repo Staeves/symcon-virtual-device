@@ -471,7 +471,7 @@ class Frontend_AK extends Frontend {
 		}
 	}
 }
-class Frontend_du extends Frontend {	// TODO setinteger and stufe:XY
+class Frontend_DU extends Frontend {	// TODO setinteger and stufe:XY
 	const IntegerRepr = true;
 	public function set(string $val, bool $doValueSet = true) : void {
 		$val_parts = explode(":", $val);
@@ -595,8 +595,8 @@ class Frontend_BL extends Frontend {	// TODO Konstantlicht, % in s, stopp, farbe
 		}
 	}
 }
-class Frontend_HZ extends Frontend {	// TODO setInteger, Zahl
-	const IntegerRepr = true;
+class Frontend_HZ extends Frontend {
+	const FloatRepr = true;
 	public function set(string $val, bool $doValueSet = true) : void {
 		$val_parts = explode(":", $val);
 		$vall = strtolower($val_parts[0]);
@@ -610,7 +610,11 @@ class Frontend_HZ extends Frontend {	// TODO setInteger, Zahl
 			$this->$fun($val_parts[1], $doValueSet);
 			break;
 		default:
-			throw new Exception("Unknown value $val");
+			if (is_numeric($vall)) {
+				$this->set_floatnum(floatval($vall), $doValueSet);
+			} else {
+				throw new Exception("Unknown value $val");
+			}
 		}
 	}
 }
@@ -636,7 +640,7 @@ class Frontend_ST extends Frontend {
 		}
 	}
 }
-class Frontend_RA extends Frontend {	// TODO Konstantlicht, stopp, dunkel
+class Frontend_RA extends Frontend {	// TODO Konstantlicht, dunkel
 	const FloatRepr = true;
 	const NeedsTermiteMaster = true;
 	const NeedsOutsideTempSensor = true;
@@ -654,6 +658,7 @@ class Frontend_RA extends Frontend {	// TODO Konstantlicht, stopp, dunkel
 		case "schlitze":
 		case "sonnenschutz":
 		case "nachtisolierung":
+		case "stopp":
 			$this->$fun($doValueSet);
 			break;
 		case "wochenplan":
@@ -747,7 +752,7 @@ class Frontend_TA extends Frontend {	// TODO stopp
 		}
 	}
 }
-class Frontend_MA extends Frontend {	// TODO stopp
+class Frontend_MA extends Frontend {
 	const FloatRepr = true;
 	const NeedsOutsideTempSensor = true;
 	const NeedsLocation = true;
@@ -761,6 +766,7 @@ class Frontend_MA extends Frontend {	// TODO stopp
 		case "sonnenschutz":
 		case "ausgefahren":
 		case "eingefahren":
+		case "stopp":
 			$this->$fun($doValueSet);
 			break;
 		case "wochenplan":
@@ -775,7 +781,7 @@ class Frontend_MA extends Frontend {	// TODO stopp
 		}
 	}
 }
-class Frontend_VO extends Frontend {	// TODO stopp
+class Frontend_VO extends Frontend {
 	const FloatRepr = true;
 	const NeedsOutsideTempSensor = true;
 	const NeedsLocation = true;
@@ -789,6 +795,7 @@ class Frontend_VO extends Frontend {	// TODO stopp
 		case "sonnenschutz":
 		case "auf":
 		case "ab":
+		case "stopp":
 			$this->$fun($doValueSet);
 			break;
 		case "wochenplan":
@@ -803,7 +810,7 @@ class Frontend_VO extends Frontend {	// TODO stopp
 		}
 	}
 }
-class Frontend_WS extends Frontend {	// TODO stopp
+class Frontend_WS extends Frontend {
 	const FloatRepr = true;
 	public function set(string $val, bool $doValueSet = true) : void {
 		$val_parts = explode(":", $val);
@@ -812,6 +819,7 @@ class Frontend_WS extends Frontend {	// TODO stopp
 		switch ($vall) {
 		case "auf":
 		case "ab":
+		case "stopp":
 			$this->$fun($doValueSet);
 			break;
 		default:

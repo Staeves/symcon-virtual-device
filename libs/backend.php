@@ -268,7 +268,7 @@ class Backend_HM_Dimmer extends Backend_HM_Float {
  */
 
 /*
- * Rolladen:
+ * Shutter:
  * LEVEL 0.0 - 1.0
  * STOP	action
  * WORKING boolean
@@ -288,6 +288,18 @@ class Backend_HM_Dimmer extends Backend_HM_Float {
  * HMW-LC-Bl1-DR	3
  * HMW-LC-Bl1-DR-2	3
  */
+class Backend_HM_Shutter extends Backend_HM_Float {
+	const Invertable = true;
+	public function stop() {
+		$inst_id = $this->device->ReadPropertyInteger("HW_Variable");
+		HM_WriteValueBoolean($inst_id, "STOP", true);
+		return IPS_GetObjectIDByIdent("WORKING", $inst_id);
+	}
+	public function getWorkingID() : int {
+		$inst_id = $this->device->ReadPropertyInteger("HW_Variable");
+		return IPS_GetObjectIDByIdent("WORKING", $inst_id);
+	}
+}
 
 /*
  * Fensterkipper:
@@ -297,7 +309,20 @@ class Backend_HM_Dimmer extends Backend_HM_Float {
  *
  * HM-Sec-Win		1
  * HM-Sec-Win-Generic	1
-
+ */
+class Backend_HM_Window extends Backend_HM_Shutter {
+	public function int_set(float $val) {
+		if ($val == 0) {
+			$val = -0.005;
+		}
+		HM_WriteValueFloat($this->device->ReadPropertyInteger("HW_Variable"), "LEVEL", $val);
+	}
+	public function int_get() : float {
+		$inst_id = $this->device->ReadPropertyInteger("HW_Variable");
+		$val = GetValueFloat(IPS_GetObjectIDByIdent("LEVEL", $inst_id));
+		return $val < 0 ? 0 : $val;
+	}
+}
 /*
  * Heizkörperthermostat
  * SET_TEMPERATURE 4.5-30.5
@@ -305,12 +330,38 @@ class Backend_HM_Dimmer extends Backend_HM_Float {
  * HM-CC-RT-DN		4
  * HM-CC-RT-DN-BoM	4
  */
+class Backend_HM_Heater extends Backend_HM {
+	public function int_set(float $val) {
+		$val = max(4.5, min(30.5, $val));
+		HM_WriteValueFloat($this->device->ReadPropertyInteger("HW_Variable"), "SET_TEMPERATURE", $val);
+	}
+	public function int_get() : float {
+		$inst_id = $this->device->ReadPropertyInteger("HW_Variable");
+		$val = GetValueFloat(IPS_GetObjectIDByIdent("LEVEL", $inst_id));
+		return $val <= 4.5 ? 0.0 : ($val >= 30.5 ? 100.0 : $val);
+	}
+}
 /* Wandtehrmostat
  * SETPOINT	0.0, 6.0-30.0, 100.0
  *
  * HM-CC-TC		2
  * ZEL STG RM FWT	2
  */
+class Backend_HM_Thermostate extends Backend_HM {
+	public function int_set(float $val) {
+		if ($val < 6.0) {
+			$val = 0.0;
+		} elseif ($val > 30.0) {
+			$val = 100.0;
+		}
+		HM_WriteValueFloat($this->device->ReadPropertyInteger("HW_Variable"), "SETPOINT", $val);
+	}
+	public function int_get() : float {
+		$inst_id = $this->device->ReadPropertyInteger("HW_Variable");
+		$val = GetValueFloat(IPS_GetObjectIDByIdent("SETPOINT", $inst_id));
+		return $val;
+	}
+}
 
 /* 
  * Signal (sound and light)

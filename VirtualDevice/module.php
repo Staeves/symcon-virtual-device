@@ -86,7 +86,11 @@ class VirtualDevice extends IPSModule {
 					{ "caption": "IPS Float", "value": "IPS_Float"},
 					{ "caption": "HomeMatic generisch Binär", "value": "HM_Boolean"},
 					{ "caption": "HomeMatic generisch Float", "value": "HM_Float"},
-					{ "caption": "HomeMatic Dimmer", "value": "HM_Dimmer"}
+					{ "caption": "HomeMatic Dimmer", "value": "HM_Dimmer"},
+					{ "caption": "HomeMatic Rolladen", "value": "HM_Shutter"},
+					{ "caption": "HomeMatic Fensterkipper", "value": "HM_Window"},
+					{ "caption": "HomeMatic Heizkörperthermostat", "value": "HM_Heater"},
+					{ "caption": "HomeMatic Wandthermostat", "value": "HM_Thermostate"}
 				]
 			} ' . $this->GetBackend()->GetFormPart() .']} ]} ]}';
 		return $res;
